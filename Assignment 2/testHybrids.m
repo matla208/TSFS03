@@ -3,8 +3,8 @@ clear all
 close all
 clc
 format shortg
-load('EUDC_MAN_DDP')
-%load('City_MAN_DDP')
+%load('EUDC_MAN_DDP')
+load('City_MAN_DDP')
 run('Car_Data_2')
 
 global V_z
@@ -19,7 +19,7 @@ Gear(G_z==5) = Gear_ratio(5);
 xtot = trapz(V_z);
 %%
 % Uncomment the lines as applicable
-% CaseToRun='parallel';
+%CaseToRun='parallel';
 CaseToRun='series';
 %CaseToRun='testParallel';
 %CaseToRun='testPseries';
@@ -30,8 +30,8 @@ switch CaseToRun,
   % Select discretization for the SOC.
   % Assign cost for the final state.
   T_grid    = T_z;
-  SOC_grid  = 0.49:0.0001:0.51;
-  %SOC_grid = 0.5; single value simulates conventional as we cant use
+  SOC_grid  = 0.4:0.001:0.6;
+  %SOC_grid = 0.5; %single value simulates conventional as we cant use
   %battery.
   finalCost = zeros(size(SOC_grid));
   finalCost(SOC_grid<0.5) = inf;% makes it charge sustaining 
@@ -46,23 +46,25 @@ switch CaseToRun,
   SOC_start = 0.50
   pos = find(SOC_grid==SOC_start)
   %SOC_value(1) = SOC_start
-  
+  F100 = value(1,find(SOC_grid==SOC_start ))*100/(pl*10^-3*xtot*10^-3)
  for i = 1:length(T_grid)-1
      SOC_value(i) = SOC_grid(SOC_path(i,pos));
      mdot_f(i) = value(i,pos);
      pos = find(SOC_grid==SOC_value(i));
      
  end
- figure(1)
-
+ figure(2)
+ 
+  subplot(121)
  plot(SOC_value)
  ylabel('State of Charge [%]')
  xlabel('Time [s]')
- figure(2)
- 
- plot(mdot_f)
+ grid on
+ subplot(122)
+  plot(mdot_f)
  ylabel('Cost in fuel mass [Kg]')
  xlabel('Time [s]')
+ grid on
 %   mn = length(value)-1;
 %   Soc_value = [Soc_start SOC_grid(pos)] ;
  case 'series',
@@ -71,8 +73,8 @@ switch CaseToRun,
   % Assign cost for the final states.
   T_grid    =T_z ;
   Ne_vector = [0 800:200:5000];
- SOC_vector = 0.4:0.0001:0.6;
-%   SOC_vector = repmat(0.5,length(Ne_vector),1)'; % ingen batteri användning
+ SOC_vector = 0.4:0.001:0.6;
+ %SOC_vector = repmat(0.5,length(Ne_vector),1)'; % ingen batteri användning
   
   SOC_grid  = repmat(SOC_vector,length(Ne_vector),1)';% make them the same to get all possible final points
   
@@ -91,7 +93,7 @@ switch CaseToRun,
   SOC_pos = find(SOC_vector==SOC_start )%& Ne_vector == Ne_start);
   %SOC_value(1) = SOC_start
   Ne_pos = find(Ne_vector== Ne_start )%& SOC_vector == SOC_start);
-  F100 = value(1,find(SOC_vector==SOC_start ),find(Ne_vector== Ne_start ))*100/(pl*10^-3*xtot*10^-3);
+  F100 = value(1,find(SOC_vector==SOC_start ),find(Ne_vector== Ne_start ))*100/(pl*10^-3*xtot*10^-3)
  for i = 1:length(T_grid)-1
      SOC_value(i) = SOC_grid(SOC_pos,Ne_pos);
      Ne_value(i) = Ne_grid(SOC_pos,Ne_pos);
@@ -103,20 +105,22 @@ switch CaseToRun,
  end
  
  figure(1)
-
+ subplot(221)
  plot(SOC_value)
  ylabel('State of Charge [%]')
  xlabel('Time [s]')
- 
- figure(3)
+ grid on
+ subplot(222)
  plot(Ne_value)
- ylabel('engine_speed [%]')
+ ylabel('engine_speed [rpm]')
  xlabel('Time [s]')
- figure(2)
+ grid on
+ subplot(223)
  
  plot(mdot_f)
  ylabel('Cost in fuel mass [Kg]')
  xlabel('Time [s]')
+ grid on
   
   
  case 'testParallel',
